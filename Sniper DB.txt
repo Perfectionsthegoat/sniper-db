@@ -1,0 +1,117 @@
+SpreadMod = {
+    BulletSpread = {
+        Enabled = true,
+        Amount = 0
+    }
+}
+
+local old; old = hookfunction(math.random, function(...)
+    local args = {...}
+    if checkcaller() then
+        return old(...)
+    end
+    if (#args == 0) or 
+       (args[1] == -0.05 and args[2] == 0.05) or 
+       (args[1] == -0.1) or
+       (args[1] == -0.05) then
+        if SpreadMod.BulletSpread.Enabled then
+            local spread = SpreadMod.BulletSpread.Amount / 100
+            return old(...) * spread
+        end
+    end
+    return old(...)
+end)
+
+local gui = Instance.new("ScreenGui")
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.Name = "SpreadUI"
+gui.Parent = game:GetService("CoreGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 110)
+frame.Position = UDim2.new(0.5, -130, 0.8, -55)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -20, 0, 30)
+title.Position = UDim2.new(0, 10, 0, 5)
+title.Text = "Spread Controller"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 16
+title.Font = Enum.Font.GothamBold
+title.BackgroundTransparency = 1
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = frame
+
+local valueLabel = Instance.new("TextLabel")
+valueLabel.Size = UDim2.new(1, -20, 0, 20)
+valueLabel.Position = UDim2.new(0, 10, 0, 35)
+valueLabel.Text = "Spread Amount: 0"
+valueLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+valueLabel.TextSize = 14
+valueLabel.Font = Enum.Font.Gotham
+valueLabel.BackgroundTransparency = 1
+valueLabel.TextXAlignment = Enum.TextXAlignment.Left
+valueLabel.Parent = frame
+
+local slider = Instance.new("Frame")
+slider.Size = UDim2.new(0, 220, 0, 8)
+slider.Position = UDim2.new(0, 20, 0, 70)
+slider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+slider.BorderSizePixel = 0
+slider.Parent = frame
+Instance.new("UICorner", slider).CornerRadius = UDim.new(0, 4)
+
+local knob = Instance.new("Frame")
+knob.Size = UDim2.new(0, 14, 0, 20)
+knob.Position = UDim2.new(0, -5, -0.7, 0)
+knob.BackgroundColor3 = Color3.fromRGB(255, 120, 50)
+knob.BorderSizePixel = 0
+knob.Parent = slider
+Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
+
+local watermark = Instance.new("TextLabel")
+watermark.Size = UDim2.new(1, -10, 0, 20)
+watermark.Position = UDim2.new(0, 0, 1, -20)
+watermark.Text = ".gg/traced"
+watermark.TextColor3 = Color3.fromRGB(120, 120, 120)
+watermark.TextSize = 12
+watermark.Font = Enum.Font.Gotham
+watermark.BackgroundTransparency = 1
+watermark.TextXAlignment = Enum.TextXAlignment.Right
+watermark.Parent = frame
+
+local UIS = game:GetService("UserInputService")
+local dragging = false
+
+knob.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local relX = math.clamp((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
+        knob.Position = UDim2.new(relX, -5, -0.7, 0)
+        local spreadValue = math.floor(relX * 100)
+        SpreadMod.BulletSpread.Amount = spreadValue
+        valueLabel.Text = "Spread Amount: " .. spreadValue
+    end
+end)
+
+UIS.InputBegan:Connect(function(input, gp)
+    if not gp and input.KeyCode == Enum.KeyCode.Insert then
+        frame.Visible = not frame.Visible
+    end
+end)
